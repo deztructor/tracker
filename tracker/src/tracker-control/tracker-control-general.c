@@ -535,15 +535,18 @@ get_uid_for_pid (const gchar  *pid_as_string,
 	GFileInfo *info;
 	GError *error = NULL;
 	gchar *fn;
+	gchar *proc_dir_name;
 	guint uid;
 
+	proc_dir_name = g_build_filename ("/proc", pid_as_string, NULL);
+
 #ifdef __sun /* Solaris */
-	fn = g_build_filename ("/proc", pid_as_string, "psinfo", NULL);
+	fn = g_build_filename (proc_dir_name, "psinfo", NULL);
 #else
-	fn = g_build_filename ("/proc", pid_as_string, "cmdline", NULL);
+	fn = g_build_filename (proc_dir_name, "cmdline", NULL);
 #endif
 
-	f = g_file_new_for_path (fn);
+	f = g_file_new_for_path (proc_dir_name);
 	info = g_file_query_info (f,
 	                          G_FILE_ATTRIBUTE_UNIX_UID,
 	                          G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
@@ -558,6 +561,8 @@ get_uid_for_pid (const gchar  *pid_as_string,
 		uid = g_file_info_get_attribute_uint32 (info, G_FILE_ATTRIBUTE_UNIX_UID);
 		g_object_unref (info);
 	}
+
+	g_free(proc_dir_name);
 
 	if (filename) {
 		*filename = fn;
